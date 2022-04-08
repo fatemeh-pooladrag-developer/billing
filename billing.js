@@ -1,3 +1,4 @@
+
 let table = document.querySelector("table");
 reload()
 
@@ -9,24 +10,21 @@ function updateChart() {
     let dateValues = [];
     let incomeValues = [];
     let expensesValues = [];
-
+    let formatedDateArray = []
     let data = getData();
     if (data) {
-
         for (i = 0;i < data.length;i++) {
             dateValues.push(data[i].date)
         }
-        const isDescending = false; //set to false for ascending
-        dateValues.sort((a, b) => isDescending ? new Date(b).getTime() - new Date(a).getTime() : new Date(a).getTime() - new Date(b).getTime());
+        dateValues.sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
-        // uniqe date values
-        dateValues = [...new Set(dateValues)];
-
-
-
-        for (i = 0;i < dateValues.length;i++) {
+        for (el of dateValues) {
+            formatedDateArray.push(convertDateForChart(el));
+        }
+        formatedDateArray = [...new Set(formatedDateArray)];
+        for (i = 0;i < formatedDateArray.length;i++) {
             let thisDateData = data.filter(row => {
-                return row.date === dateValues[i]
+                return convertDateForChart(row.date) === formatedDateArray[i]
             })
             let thisDateIncome = thisDateData.filter(row => {
                 return row.type === "income"
@@ -52,8 +50,6 @@ function updateChart() {
 
             }
 
-
-
             if (thisDateExpenses.length > 1) {
                 const sum = thisDateExpenses.reduce(
                     (previousValue, currentValue) => previousValue + Number(currentValue.amount),
@@ -72,11 +68,6 @@ function updateChart() {
 
         }
 
-
-    }
-    let formatedDateArray = []
-    for (el of dateValues) {
-        formatedDateArray.push(convertDateForChart(el));
     }
 
     new Chart("myChart", {
@@ -104,6 +95,7 @@ function updateChart() {
             }
         }
     });
+
 }
 
 
@@ -149,31 +141,29 @@ function generateTableHead(table, data) {
 function generateTable(table, data) {
     data.forEach(function (element, i) {
         let row = table.insertRow();
-        const newElement = Object.fromEntries(
-            Object.entries(element).slice(0, 5)
-        )
-        for (key in newElement) {
+        const reversedKeysElement = Object.keys(element).reverse();
+        for (key of reversedKeysElement) {
             let cell = row.insertCell();
             if (key === "description") {
                 let div = document.createElement('div');
-                div.innerHTML = '<button id="show_details_button" type="button" onclick="showDetails(' + newElement["id"] + ')">نمایش</button > <button id="delete_button" type="button" onclick="deleteRow(' + newElement["id"] + ')">حذف</button';
+                div.innerHTML = '<button id="delete_button" type="button" onclick="showDeleteConfirmation(' + element["id"] + ')">حذف</button > <button id="show_details_button" type="button" onclick="showDetails(' + element["id"] + ')">نمایش</button';
                 cell.appendChild(div);
             } else {
-                let value = newElement[key];
+                let value = element[key];
                 if (key === "id") {
-                    value = i + 1;
+                    value = convertToPersianNumber((i + 1).toString())
                 } else if (key === "amount") {
-
                     value = Number(value).toLocaleString('ar-EG') + " تومان  "
-
                 } else if (key === "type") {
-                    value = newElement['type'] === "expenses" ? "هزینه" : "درآمد";
+                    value = element['type'] === "expenses" ? "هزینه" : "درآمد";
                 } else if (key === "date") {
                     value = convertDateForTable(value);
                 }
+                let container = document.createElement("span");
                 let text = document.createTextNode(value);
-
-                cell.appendChild(text);
+                container.appendChild(text);
+                container.style.color = key === "type" ? element['type'] === "expenses" ? "#E03F3F" : "#2CBE26" : "gray";
+                cell.appendChild(container);
             }
 
         }
@@ -188,7 +178,16 @@ function showDetails(id) {
     let row = data.filter(row => {
         return row.id === id
     })
-    console.log(row)
+    Swal.fire({
+        title: row[0].description !== "" ? row[0].description : "توضیحاتی برای این ثبت موجود نمی باشد",
+        icon: 'info',
+        iconHtml: '!',
+        confirmButtonText: 'بازگشت',
+        confirmButtonColor: '#3190FF',
+        showCloseButton: true,
+
+    })
+
 }
 
 function deleteRow(id) {
@@ -203,11 +202,10 @@ function deleteRow(id) {
 function updateTable() {
     table.innerHTML = "";
     let headData = ["توضیحات", "نوع هزینه", "تاریخ", "مبلغ", "ردیف"];
-
     let data = getData();
-
     generateTable(table, data);
-    generateTableHead(table, headData);
+    data.length > 0 && generateTableHead(table, headData);
+
 }
 
 
@@ -239,18 +237,25 @@ function addBill() {
     let date_month = ('0' + document.getElementById('bill_date_month').value).slice(-2);
     let date_year = document.getElementById('bill_date_year').value;
     let description = document.getElementById('description').value;
-    let allRowData = {
-        'id': Date.now(),
-        'amount': amount,
-        'date': date_month + "/" + date_day + "/" + date_year,
-        'type': type,
-        'description': description,
-    };
 
-    let data = getData();
-    data = data ? data.concat([allRowData]) : [allRowData];
-    localStorage.setItem("BILL_DATA", JSON.stringify(data))
-    reload()
+    if (amount < 0 || amount === "") {
+        showValidaitionError("مبلغ وارد شده صحیح نمی باشد")
+    } else if (date_day < 1 || date_day > 31 || date_month < 1 || date_month > 12 || date_year < 1350 || date_year > 1450) {
+        showValidaitionError("تاریخ وارد شده صحیح نمی باشد")
+    } else {
+        let allRowData = {
+            'id': Date.now(),
+            'amount': amount,
+            'date': date_month + "/" + date_day + "/" + date_year,
+            'type': type,
+            'description': description,
+        };
+
+        let data = getData();
+        data = data ? data.concat([allRowData]) : [allRowData];
+        localStorage.setItem("BILL_DATA", JSON.stringify(data))
+        reload()
+    }
 }
 
 
@@ -263,51 +268,13 @@ function reload() {
 
 
 function convertMonth(num) {
-    switch (num) {
-        case "01":
-            return "فروردین"
-            break;
-        case "02":
-            return "اردیبهشت"
-            break;
-        case "03":
-            return "خرداد"
-            break;
-        case "04":
-            return "تیر"
-            break;
-        case "05":
-            return "مرداد"
-            break;
-        case "06":
-            return "شهریور"
-            break;
-        case "07":
-            return "مهر"
-            break;
-        case "08":
-            return "آبان"
-            break;
-        case "09":
-            return "آذر"
-            break;
-        case "10":
-            return "دی"
-            break;
-        case "11":
-            return "بهمن"
-            break;
-        case "12":
-            return "اسفند"
-            break;
-        default:
-            return ""
-    }
+    let months = new Array("فروردين", "ارديبهشت", "خرداد", "تير", "مرداد", "شهريور", "مهر", "آبان", "آذر", "دي", "بهمن", "اسفند");
+    return months[Number(num) - 1]
 }
 
 function convertDateForChart(value) {
     const array = value.split("/");
-    return array[2].slice(-2) + convertMonth(array[0]);
+    return convertToPersianNumber(array[2].slice(-2) + convertMonth(array[0]));
 }
 
 
@@ -320,13 +287,56 @@ function clearForm() {
     document.getElementById('bill_date_year').value = "";
     document.getElementById('description').value = "";
     document.getElementById("amount_show").innerHTML = "صفر تومان";
+    document.getElementById("amount_show").style.color = "#2CBE26";
 
 }
 
 function convertDateForTable(value) {
     const array = value.split("/");
-    return array[2] + "/" + array[0] + "/" + array[1];
+    return convertToPersianNumber(array[2] + "/" + array[0] + "/" + array[1]);
 }
+
+
+function convertToPersianNumber(str) {
+    return str.replace(/[0-9]/g, c => String.fromCharCode(c.charCodeAt(0) + 1728))
+}
+
+
+function showDeleteConfirmation(id) {
+    Swal.fire({
+        title: "آیا مطمئن هستید؟",
+        icon: 'question',
+        iconHtml: '؟',
+        confirmButtonText: 'حذف',
+        cancelButtonText: 'بازگشت',
+        confirmButtonColor: '#D55F5F',
+        cancelButtonColor: '#3190FF',
+        showCancelButton: true,
+        showCloseButton: true,
+    }).then((result) => {
+        if (result.isConfirmed) {
+            deleteRow(id)
+        }
+    })
+
+}
+
+function showValidaitionError(err) {
+    Swal.fire({
+        title: err,
+        icon: 'warning',
+        iconHtml: '!',
+        confirmButtonText: 'بازگشت',
+        confirmButtonColor: '#3190FF',
+        showCloseButton: true,
+
+    })
+
+}
+
+
+
+
 
 
 
