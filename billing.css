@@ -215,6 +215,7 @@ body {
   border: transparent;
   align-self: center;
   margin-top: 10px;
+  font-size: 19px;
 }
 
 #radio-buttons {
@@ -299,4 +300,20 @@ textarea {
   border: 1px solid #eee;
   margin-right: 2%;
   margin-top: 10px;
+}
+
+thead {
+  width: 800px;
+  background-color: #f5f8fb;
+  border: 1px solid #eef1f3;
+  height: 73px;
+}
+
+table {
+  text-align: center;
+  width: 100%;
+}
+
+td {
+  width: 20%;
 }

@@ -18,13 +18,13 @@
         <div id="expenses_income">
           <div id="expenses">
             <div id="expenses_title">مخارج</div>
-            <div id="expenses_number">234343434</div>
+            <div id="expenses_number">0</div>
           </div>
 
           <div id="seperate_line"></div>
           <div id="income">
             <div id="income_title">درآمد</div>
-            <div id="income_number">232323</div>
+            <div id="income_number">0</div>
           </div>
         </div>
         <div id="chart">
@@ -92,42 +92,14 @@
           <div class="title_field">توضیحات</div>
 
           <textarea name="description" id="description"></textarea><br />
-          <button id="register_button" type="button" onclick="myFunction()">
+          <button id="register_button" type="button" onclick="addBill()">
             ثبت دخل و خرج
           </button>
         </div>
       </div>
     </div>
     <div id="table">
-      <table id="myTable">
-        <tr>
-          <th>ردیف</th>
-          <th>مبلغ</th>
-          <th>تاریخ</th>
-          <th>نوع هزینه</th>
-          <th>توضیحات</th>
-        </tr>
-        <tr>
-          <th>۱</th>
-          <th>۲۲۰۰۰ تومان</th>
-          <th>۱۳۹۹/۰۴/۰۳</th>
-          <th>درآمد</th>
-          <th>
-            <div>
-              <button
-                id="show_details_button"
-                type="button"
-                onclick="showDetails()"
-              >
-                نمایش
-              </button>
-              <button id="delete_button" type="button" onclick="deleteRow()">
-                حذف
-              </button>
-            </div>
-          </th>
-        </tr>
-      </table>
+      <table id="myTable"></table>
     </div>
     <script src="./wordifyfa.js"></script>
     <script src="./billing.js"></script>
